@@ -1,265 +1,276 @@
 //
-// ======================= ATTENTION !!! =============================
-// All settings are made on the Constants.h tab
-// Read what is written in Russian there.
-// Or don't touch anything if you collected it, as in the original video.
+// ======================= ВНИМАНИЕ !!! =============================
+//  Все настройки делаются на вкладке Constants.h
+//  Почитайте там то, что на русском языке написано.
+//  Либо ничего не трогайте, если собирали, как в оригинальном видео.
 //
-//  the solution to the problems can be found here under the spoilers:
+//  решение проблем можно поискать тут под спойлерами:
 //  https://community.alexgyver.ru/goto/post?id=33652
 // ==================================================================
 
-// Link for PCB manager:
+// Ссылка для менеджера плат:
 // https://arduino.esp8266.com/stable/package_esp8266com_index.json
 
 /*
-  Sketch for the project "Multifunctional RGB lamp"
-   Project page (diagrams, descriptions): https://alexgyver.ru/GyverLamp/
-   Sources of the author's (old) firmware on GitHub: https://github.com/AlexGyver/GyverLamp/
-   sources of the new version: https://community.alexgyver.ru/goto/post?id=33652
-   Do you like the lamp? Support the author! https://alexgyver.ru/support_alex/
-   Author of the idea and the first implementation: AlexGyver, AlexGyver Technologies, 2019
-   https://AlexGyver.ru/
+  Скетч к проекту "Многофункциональный RGB светильник"
+  Страница проекта (схемы, описания): https://alexgyver.ru/GyverLamp/
+  Исходники авторской (старой) прошивки на GitHub: https://github.com/AlexGyver/GyverLamp/
+  исходники новой версии: https://community.alexgyver.ru/goto/post?id=33652
+  Нравится лампа? Поддержи автора! https://alexgyver.ru/support_alex/
+  Автор идеи и первой реализации: AlexGyver, AlexGyver Technologies, 2019
+  https://AlexGyver.ru/
 */
 
 /*
-  Small changes between versions
-  - If you hold down the button on the off lamp, the "White light" mode will turn on immediately.
-  - If the "White light" mode is turned on (no matter what method) and this mode is not added to the list for automatic switching of effects, then it will not switch itself.
-  - You can make the button switch only those modes that are added to the favorites for the Loop mode. Setting #define BUTTON_CHANGE_FAVORITES_MODES_ONLY
-  - The lamp will try to connect to the router for 60 seconds, not 7, as it used to be. This is so that the lamp can wait for the router to load if the electricity in the house goes out. Setting #define ESP_CONN_TIMEOUT (60U)
-  - The lamp will check for the appearance of the Internet on the router every 15 seconds, and not once every 5 minutes, as it used to be. This is to quickly synchronize the time in the lamp with the NTP server. Setting #define RESOLVE_INTERVAL (15UL * 1000UL)
-  - The lamp will forget the password to the router if it was switched to "without a router" mode by pressing the button or after 60 seconds of waiting. This is to prevent the application from losing contact with the lamp in the "no router" mode. Setting #define RESET_WIFI_ON_ESP_MODE_CHANGE
-  - The firmware cannot be loaded if the current libraries from the archive with the firmware are not placed in the library folder.
-  - The lamp will not respond to "phantom presses" of the touch button if you forgot to plug it in before plugging the lamp into the socket. Setting #define BUTTON_LOCK_ON_START
-  - Removed in a separate setting the lamp signal "about a problem with time" during the operation of effects. By default, the lamp will not blink two LEDs while effects are running.
+  Небольшие изменения между версиями
+  - Если удерживать кнопку на выключенной лампе, включится сразу режим "Белый свет".
+  - Если включился режим "Белый свет" (не важно, каким способом) и при этом данный режим не добавлен в список для автоматического переключения эффектов, тогда он сам не переключится.
+  - Можно сделать, чтобы кнопкой переключались только те режимы, которые добавлены в избранное для режима Цикл. Настройка #define BUTTON_CHANGE_FAVORITES_MODES_ONLY
+  - Лампа будет пытаться соединиться с роутером целых 60 секунд, а не 7, как раньше было. Это чтобы лампа могла дождаться загрузки роутера, если электричество в доме отключалось. Настройка #define ESP_CONN_TIMEOUT (60U)
+  - Лампа будет проверять появление на роутере интернета через каждые 15 секунд, а не раз в 5 минут, как раньше было. Это чтобы время в лампе поскорее синхронизировалось с NTP-сервером. Настройка #define RESOLVE_INTERVAL (15UL * 1000UL)
+  - Лампа будет забывать пароль к роутеру, если её переключили в режим работы "без роутера" кнопкой или по истечении 60 секунд ожидания. Это чтобы приложение не теряло связь с лампой в режиме "без роутера". Настройка #define RESET_WIFI_ON_ESP_MODE_CHANGE
+  - Прошивку не удастся загрузить, если актуальные библиотеки из архива с прошивкой не положены в папку с библиотеками.
+  - Лампа не будет реагировать на "фантомные нажатия" сенсорной кнопки, если вы забыли её подключить перед включением лампы в розетку. Настройка #define BUTTON_LOCK_ON_START
+  - Убран в отдельную настройку сигнал лампы "про проблему со временем" во время работы эффектов. По умолчанию мигать двумя светодиодами во время работы эффектов лампа не будет.
 
-  Version 1.5.85 effects in 1
-  - Added effects Fairy, Source.
-  - Removed the effect of Balls with a train (it was just a copy of the Balls for demonstration on other settings of the Speed ​​slider).
-  - Added the ability to automatically synchronize the lamp time with a smartphone. The application must support this function.
-  - Added indication that the lamp does not know the time (if 2 colored dots run in a circle along the bottom of the lamp, it means that it does not know).
-  - Fixed a bug in the FastLed library in the implementation of the blur2d function. It is recommended to put the libraries from the archive with the firmware into the libraries folder of the Arduino IDE program.
-  - Removed the prohibition to search for the lamp's ip-address when the lamp works as an access point without a router (in ESP_MODE = 0).
-  - Added the ability to pass the name of the lamp to the application (in case you have several lamps in your home network). The application must support this function.
+  Версия 2.86² эффектов в 1
+  - В режиме Цикл эффекты теперь запускаются на случайных, но удачных настройках. Можно это отключить, если не требуется.
+  - Добавлены эффекты Цветные драже, Плазменная лампа, Северное сияние, Шары, Магма.
+  - Удалён эффект Блуждающий кубик (версию прошивки повышаем, теперь больше нет оправданий, что этот эффект должен быть вместе со всеми 26ю изначальными).
+  - Собраны воедино надоевшие эффекты Радуга вертикальная+горизонтальная+диагональная, Звездопад+Метель.
+  - Убран запрет на установку времени ожидания подключения к роутеру более 7 секунл (для этого нужно брать библиотеки из архива с прошивкой).
+  - В эффекте Белый свет добавлен вертикальный вариант ("направленный свет") для бегунка Масштаб от 50 и выше.
+  - Исправлен режим Часы для узких матриц от 11 до 14 пикселей в высоту (не работал).
+  - Появилась поддержка команд "RND_" от приложения для управления режимом случайных настроек и возврату к настройкам по умолчанию (а приложение такое пока ещё не появилось).
+  
+  Версия 1.5.85 эффектов в 1
+  - Добавлены эффекты Фея, Источник.
+  - Удалён эффект Мячики со шлейфом (это была просто копия Мячиков для демонстрации на других настройках бегунка Скорость).
+  - Добавлена возможность автоматической синхронизации времени лампы со смартфоном. Приложение должно поддерживать данную функцию.
+  - Добавлена индикация о том, что лампа не знает время (если по низу лампы по кругу бегут 2 цветные точки, значит, не знает).
+  - Исправлен баг в библиотеке FastLed в реализации функции blur2d. Рекомендуется положить библиотеки из архива с прошивкой в папку библиотек программы Arduino IDE.
+  - Убран запрет поиска ip-адреса лампы, когда лампа работает в виде точки доступа без роутера (в режиме ESP_MODE = 0).
+  - Добавлена возможность передать приложению имя лампы (на случай, когда у вас в домашней сети несколько ламп). Приложение должно поддерживать данную функцию.
+  
+  Версия 1.5.84 эффекта в 1
+  - Добавлены эффекты Кипение, Притяжение, Капли на стекле, Дымовые шашки, Тихий океан, Nexus.
+  - Убраны эффекты Белый огонь, Цветной огонь, Бeлый вoдoпaд, Быстрый пульс, Пульсирующая кoмeтa (копии и похожие эффекты уже не интересны даже в режиме Цикл, и так эффектов многовато).
+  - Убран запрет обновления прошивки "по воздуху", когда лампа работает в виде точки доступа без роутера (в режиме ESP_MODE = 0).
+  - Исправления в эффектах ДНК (добавлено управление бегунком Масштаб), Мячики без границ, Вихри, Разноцветные вихри, Стая, Стая и хищник (сглаживание).
 
-  Version 1.5.84 effects in 1
-  - Added effects Boiling, Attraction, Drops on glass, Smoke bombs, Pacific Ocean, Nexus.
-  - Removed the effects of White fire, Colored fire, White waterfall, Fast pulse, Pulsating coma (copies and similar effects are no longer interesting even in the Cycle mode, and there are a lot of effects).
-  - Removed the prohibition to update firmware "over the air" when the lamp works as an access point without a router (in ESP_MODE = 0).
-  - Fixes in DNA effects (added control of the Scale slider), Balls without borders, Whirlwinds, Multicolored whirlwinds, Flock, Flock and predator (anti-aliasing).
+  Версия 1.5.83 эффекта в 1
+  - Добавлен эффект Огонь 2020.
+  - Возвращён эффект Пульсирующая комета.
+  - Устранены проблемы "хищник умер", "время бегущей строкой дёргается".
+  - Убрано затухание лампы в момент смены эффектов. Убрана предварительная очистка изображения предыдущего эффекта, где было возможно.
+  - Добавлены "секретные команды" для установки Будильника Рассвет и Таймера выключения из приложения Blynk (вдруг кому очень надо).
 
-  Version 1.5.83 Effects in 1
-  - Added effect Fire 2020.
-  - The effect of the Pulsing Comet is returned.
-  - The problems "the predator died", "the time is twitching with a creeping line" are eliminated.
-  - Removed lamp attenuation when changing effects. Removed preliminary clearing of the previous effect image, where possible.
-  - Added "secret commands" for setting the Dawn Alarm and Shutdown Timer from the Blynk application (suddenly someone really needs it).
+  Версия 1.5.81 эффект в 1
+  - Удалён эффект Белая комета.
+  - Временно удалён эффект Пульсирующая комета.
+  - Временно? добавлен эффект Осциллятор.
+  - Обновлена поддержка приложения Blynk для управления текстом бегущей строки и передачи "секретных команд".
+  - Эффекты Дым лучше адаптированы для ламп с плохим рассеивателем.
+  - Найдена и убрана причина того, что в режиме Цикл лампа полностью гасла между эффектами.
+  
+  Версия 1.5.82 эффекта в 1
+  - Удалён эффект Салют.
+  - Добавлены эффекты Жидкая лампа и эффект Попкорн.
+  - Реализована возможность установки времени на лампе без подключения к интернету (через приложение для Андроид от @Koteyka - оно есть в архиве с прошивкой).
+  - Добавлена поддержка секретных команд reset=wifi, reset=effects, esp_mode=.. (через приложение для Андроид от @Koteyka - оно есть в архиве с прошивкой).
+  
+  Версия 1.5.80 эффектов в 1
+  - В эффекте Цвет добавлена возможность выбора насыщенности бегунком Скорость.
+  - Добавлены эффекты Тени, Мотыльки, Лампа с мотыльками, ДНК, Змейки, Салют.
+  - Добавлена поддержка приложения Blynk (для iOS и Android) для ламп, имеющих постоянный доступ в Интернет. Если включить, будет всё немного подтормаживать.
+  
+  Версия 1.5.74 эффекта в 1
+  - Добавлен эффект Лавовая лампа.
+  
+  Версия 1.5.73 эффекта в 1
+  - Добавлены эффекты Пикассо.
+  - Добавлен эффект Прыгуны.
+  
+  Версия 1.5.69 эффектов в 1 proper
+  - В эффекте Белый свет сделано более плавное изменение площади свечения бегунком Масштаб (может, и зря).
+  - В эффекте Метаболз наконец-то исправлена проблема перезагрузки лампы при длительной работе.
 
-  Version 1.5.81 effect in 1
-  - Removed the White Comet effect.
-  - Temporarily removed the Pulsing Comet effect.
-  - Temporarily? added the Oscillator effect.
-  - Updated support for the Blynk application for managing crawl text and transmitting "secret commands".
-  - Smoke effects are better suited for lamps with poor diffuser.
-  - Found and removed the reason that in Cycle mode the lamp was completely extinguished between effects.
+  Версия 1.5.69 эффектов в 1
+  - Добавлены эффекты Дым и Разноцветный дым.
 
-  Version 1.5.82 effects in 1
-  - Removed the Fireworks effect.
-  - Added Liquid Lamp and Popcorn effects.
-  - Implemented the ability to set the time on the lamp without an Internet connection (via the Android application from @Koteyka - it is in the archive with the firmware).
-  - Added support for secret commands reset = wifi, reset = effects, esp_mode = .. (via the Android application from @Koteyka - it is in the archive with the firmware).
+  Версия 1.5.67 эффектов в 1
+  - Добавлен отдельный режим Часы. Просто как обычный предпоследний эффект. "Скорость" регулирует местоположение цифр. Чем лучше рассеивание на лампе, тем бесполезнее этот режим.
+    Минимальная необходимая для Часов высота матрицы 11 пикселей. И 7 пикселей по ширине должно быть видно на одной стороне лампы, иначе часть циферблата уползёт на бок.
+  - Исправлены баги в эффектах Кометы, вызывающие перезагрузку лампы при отличающихся друг от друга высоте и ширине матрицы, и при матрице высотой менее 14 пикселей.
 
-  Version 1.5.80 effects in 1
-  - Added the ability to select saturation with the Speed ​​slider in the Color effect.
-  - Added effects of Shadows, Moths, Lamp with moths, DNA, Snakes, Fireworks.
-  - Added support for Blynk app (for iOS and Android) for lamps with constant Internet access. If you turn it on, everything will slow down a little.
+  Версия 1.5.66 эффектов в 1
+  - Все сложные настройки в Constants.h убраны вниз, чтобы не отвлекали.
+  - Добавлены эффекты Мячики без границ (Прыжки), Кодовый замок и Кубик Рубика. Скрыт эффект Белые мячики (можно выбрать белый цвет обычным).
+  - Добавлена возможность установить автоматическое выключение лампы после нескольких часов непрерывной работы (на случай, если кто-то забыл её выключить). 
+    В приложении время выключения будет отображаться неверно, пока не исправят в будущих версиях.
 
-  Version 1.5.74 effects in 1
-  - Added Lava Lamp effect.
+  Версия 1.5.64 эффекта в 1
+  - Добавлен эффект Мерцание.
+  - Эффект Смена цвета теперь работает медленнее. На масштабах >10 переключение цвета будет через выбранное количество секунд (1 секунда для Скорости = 255 / 2 секунды для Скорости = 254 и т.д.)
+  - В эффекте Метаболз добавлена возможность выбора палитры бегунком Масштаб
+  - Обновлены эффекты Метель и Звездопад на версию от @Palpalych.
+  - Добавлена возможность включить "очередь показов" выбранных эффектов для режима Цикл (чтобы не было повторов слишком часто). Это нужно включать в Constants.h.
+  - Добавлена возможность выключить функцию "продолжить демонстрацию последнего эффекта после обесточивания лампы". Это нужно делать в Constants.h.
+  - Исправлена размерность переменной currentMode. Возможно, теперь максимальное количество эффектов может быть больше 127 штук. Но это не точно.
+  
+  Версия 1.5.63 эффекта в 1
+  - Добавлены эффекты Тучка в банке, Гроза в банке, Осадки, Огонь 2012.
+  - Добавлена регулировка оттенка у эффекта Огонь 2018.
+  - В Constants.h добавлен параметр для поддержки более свежей версии приложения от @Koteyka.
+  - Оптимизированы функции parsing.h
+  - Исправлена функция XY(). Это был аналог getPixelNumber(), но почему-то криво написанный.
 
-  Version 1.5.73 Effects in 1
-  - Added Picasso effects.
-  - Added the Jumpers effect.
+  Версия 1.5.60 эффектов в 1
+  - Добавлен эффект Огонь 2018.
+  - Добавлена регулировка Масштаба у эффектов 2 кометы, 3 кометы, Парящий огонь, Верховой огонь.
+  - Возможно, исправлена совместимость прошивки с матрицами, где способ подключения светодиодов отличается от "змейки".
 
-  Version 1.5.69 effects in 1 proper
-  - In the White light effect, a smoother change in the glow area was made with the Scale slider (maybe in vain).
-  - In the Metabolz effect, the problem of restarting the lamp during prolonged operation has been finally fixed.
+  Версия 1.5.59 эффектов в 1
+  - Создан массив настроек всех эффектов по умолчанию. Настройки выбраны с небольшой яркостью для работы в режиме ночника (для себя делал). Можете поставить яркость побольше.
+  - Добавлен сброс настроек всех эффектов на значения по умолчанию при поступлении запроса от приложения ("загрузить список эффектов из лампы"). Можно отключить это в Constants.h.
+  - Добавлены эффекты Вихри пламени и Разноцветные вихри.
+  - В эффекте Светлячки со шлейфом теперь можно выбрать им цвета бегунком Масштаб.
 
-  Version 1.5.69 effects in 1
-  - Added effects Smoke and Multicolored smoke.
+  Версия 1.5.57 эффектов в 1
+  - Объединено использование многих переменных в разных эффектах для небольшой экономии памяти.
+  - Эффект Цвет тоже вынесен наверх в эффекты с принудительной задержкой в 50 мс, чтобы не травмировать контроллер платы.
+  - Добавлены эффекты Стая, Стая и хищник, Призмата, Волны.
+  - Увеличен размер буфера для приёма настроек Избранного от приложения в лампу. Теперь максимальное количество эффектов где-то в районе 117.
+    (но это уже предел для текущей реализации функций FavoritesManager.h. дальше придётся менять там типы переменных).
+  
+  Версия 1.5.53 эффекта в 1
+  - Изменён способ отправки списка эффектов в лампу. Теперь он не ограничен размером буфера, а ограничен хз чем.
+  - Список эффектов расширен до 53 штук.
+  - Добавлены новые функции, поддерживаемые приложением от @Koteyka (рисование, бегущая строка).
+  
+  Версия 1.5: 
+    этот же список с гиперссылками: https://community.alexgyver.ru/threads/wifi-lampa-budilnik-obsuzhdenie-proshivki-ot-gunner47.2418/post-30883
+  - Исправлен баг в условии процедуры вызова эффектов (у двух эффектов регулятор скорость не работал)
+  - Инвертирована регулировка Скорости у всех эффектов, где она работала задом наперёд
+  - Из всех эффектов убраны обращения к их порядковым номерам. Теперь любой эффект можно устанавливать на любое место (кроме номеров с 7 по 15), а также делать копии эффектов
+  - Переработано распределение флеш-памяти EepromManager.h Теперь можно добавлять новые эффекты и делать копии (копии - для демонстрации одного эффекта на разных настройках).
+  - В библиотеке FastLED исправлены коэффициенты расчёта потребления тока
+  - Эффект Огонь заменён на "Ламповый огонь", при максимальном Масштабе он же будет эффект Белый огонь
+  - Эффект Белый огонь заменён на эффект Водопад, при максимальном Масштабе цвет воды будет белым
+  - Внесены исправления эффектов Пейнтбол и Радуга диагональная от @Palpalych (выставляйте Пейнтболу Скорость побольше, чтобы выглядело хорошо)
+  - К эффекту Цвет добавлен эффект Бассейн (при максимальной Скорости блики воды исчезают, работает эффект Цвет)
+  - К эффекту Смена цвета добавлен эффект Пульс (при минимальном Масштабе будет работать эффект Смена цвета)
+  - Внесены исправления эффектов Метель и Звездопад от @Rampart
+  - У эффекта Матрица изменена цветовая палитра и алгоритм работы (Нестыдная Матрица)
+  - Эффект Светлячки со шлейфом заменён на эффект Кометы (в коде оставлены старый эффект, а также дополнительный Кометы мини, но они не подключены)
+  - С прошивкой в архиве поставляется 2 приложения. Стандартное может работать только с 26 эффектами. При увеличении количества эффектов будет работать только приложение от @Koteyka
+  - В архив с прошивкой добавлен файл с инструкцией в формате книжки. Правда, там уже устарели все ссылки.
+  - Добавлен обработчик команды "GBR" для изменения яркости всех эффектов сразу без сохранения в энергонезависимую память. Приложение должно поддерживать данную функцию.
+  - Добавлен обработчик команды "LIST" для отправки в приложение количества и реестра установленных эффектов. Приложение должно поддерживать данную функцию.
 
-  Version 1.5.67 effects in 1
-  - Added a separate Clock mode. Just like a normal penultimate effect. "Speed" adjusts the location of the numbers. The better the diffusion on the lamp, the more useless this mode is.
-    The minimum matrix height required for the Watch is 11 pixels. And 7 pixels wide should be visible on one side of the lamp, otherwise part of the dial will slide to the side.
-  - Fixed bugs in the Comet effects, causing the lamp to reload when the height and width of the matrix differ from each other, and when the matrix is ​​less than 14 pixels high.
-
-  Version 1.5.66 effects in 1
-  - All complex settings in Constants.h have been moved down so as not to distract.
-  - Added the effects of Balls Without Borders (Jumping), Combination Lock and Rubik's Cube. The effect of White balls is hidden (you can choose white as the usual color).
-  - Added the ability to set the lamp to turn off automatically after several hours of continuous operation (in case someone forgot to turn it off).
-    In the application, the shutdown time will not be displayed correctly until it is fixed in a future version.
-
-  Version 1.5.64 effects in 1
-  - Added the Flicker effect.
-  - The Color Change effect is now slower. On scales> 10, the color switching will be after the selected number of seconds (1 second for Speed ​​= 255/2 seconds for Speed ​​= 254, etc.)
-  - Added the ability to select a palette with the Scale slider in the Metabolz effect
-  - Updated Blizzard and Starfall effects to @Palpalych's version.
-  - Added the ability to enable the "queue of impressions" of the selected effects for the Loop mode (so that there are no repetitions too often). This needs to be included in Constants.h.
-  - Added the ability to turn off the function "continue demonstrating the last effect after the lamp is de-energized". This must be done in Constants.h.
-  - Fixed the dimension of the currentMode variable. Perhaps now the maximum number of effects can be more than 127. But it is not exactly.
-
-  Version 1.5.63 Effects in 1
-  - Added effects Cloud in the bank, Thunderstorm in the bank, Precipitation, Fire 2012.
-  - Added a hue adjustment for the Fire 2018 effect.
-  - Added parameter to Constants.h to support more recent version of the application from @Koteyka.
-  - Optimized parsing.h functions
-  - Fixed XY () function. It was an analogue of getPixelNumber (), but for some reason it was crookedly written.
-
-  Version 1.5.60 effects in 1
-  - Added effect Fire 2018.
-  - Added a Scale adjustment for the effects of 2 comets, 3 comets, Soaring fire, Horse fire.
-  - It is possible that the compatibility of the firmware with the matrices has been fixed, where the way of connecting the LEDs differs from the "snake".
-
-  Version 1.5.59 effects in 1
-  - Created an array of settings for all default effects. The settings were selected with a low brightness for working in the night light mode (I did it for myself). You can set the brightness higher.
-  - Added resetting all effects settings to their default values ​​when prompted by the application ("load the list of effects from the lamp"). You can turn this off in Constants.h.
-  - Added the effects of Flame Swirls and Multicolored Swirls.
-  - In the effect of Fireflies with a train, you can now select colors for them using the Scale slider.
-
-  Version 1.5.57 effects in 1
-  - Combined the use of many variables in different effects to save a little memory.
-  - The Color effect is also brought up in the effects with a forced delay of 50 ms, so as not to injure the board controller.
-  - Added effects Flock, Flock and predator, Prismata, Waves.
-  - Increased the size of the buffer for receiving favorites settings from the application to the lamp. Now the maximum number of effects is somewhere around 117.
-    (but this is already the limit for the current implementation of the FavoritesManager.h functions. Then you will have to change the variable types there).
-
-  Version 1.5.53 Effects in 1
-  - Changed the way of sending the list of effects to the lamp. Now it is not limited by the size of the buffer, but is limited to xs than.
-  - The list of effects has been expanded to 53 pieces.
-  - Added new features supported by @Koteyka's app (drawing, creeping line).
-
-  Version 1.5:
-    the same list with hyperlinks: https://community.alexgyver.ru/threads/wifi-lampa-budilnik-obsuzhdenie-proshivki-ot-gunner47.2418/post-30883
-  - Fixed a bug in the condition of the procedure for calling effects (for two effects the speed controller did not work)
-  - Inverted Speed ​​control for all effects where it worked backwards
-  - Removed references to their sequence numbers from all effects. Now any effect can be installed in any place (except numbers from 7 to 15), as well as make copies of effects
-  - Reworked the allocation of flash memory EepromManager.h Now you can add new effects and make copies (copies - to demonstrate the same effect at different settings).
-  - In the FastLED library, the coefficients for calculating the current consumption are corrected
-  - The effect of Fire has been replaced by "Lamp fire", at the maximum Scale it will also be the effect of White fire
-  - White fire effect replaced with Waterfall effect, at maximum Scale the water color will be white
-  - Fixes for Paintball and Rainbow diagonal effects by @Palpalych (set Paintball to faster speed to make it look good)
-  - Added the Pool effect to the Color effect (at maximum Speed, the glare of the water disappears, the Color effect works)
-  - Added the Pulse effect to the Color Change effect (at the minimum Scale, the Color Change effect will work)
-  - Fixes for Blizzard and Starfall effects by @Rampart
-  - The Matrix effect has changed the color palette and the algorithm of work (Shameful Matrix)
-  - The effect of the Firefly with a trail is replaced by the effect of the Comet (the old effect is left in the code, as well as the additional Comet mini, but they are not connected)
-  - 2 applications are supplied with the firmware in the archive. Standard can only work with 26 effects. With an increase in the number of effects, only the application from @Koteyka will work
-  - Added a file with instructions in the format of a book to the archive with the firmware. True, all the links there are already outdated.
-  - Added a handler for the "GBR" command to change the brightness of all effects at once without saving to non-volatile memory. The application must support this function.
-  - Added a handler for the "LIST" command to send the number and register of installed effects to the application. The application must support this function.
-  Version 1.4:
-  - Fixed bug when changing modes
-  - Fixed brakes in hotspot mode
-  --- 07/08/2019
-  - Fixed parameters and process of connecting to a WiFi network (timeout 7 seconds) and deploying a WiFi access point (username / password parameters)
-  - Added "#define USE_NTP" - allows you to prohibit access to the Internet
-  - Added "#define ESP_USE_BUTTON - allows you to assemble a lamp without a physical button, otherwise the brightness of the effects spontaneously grows to maximum
-  - Reworked IP address parameters, STA_STATIC_IP is now empty by default - eliminates confusion with IP addresses from wrong ranges
-  - Added "#define GENERAL_DEBUG" - displays some debug messages in Serial / Telnet
-  - Added "#define WIFIMAN_DEBUG (true)" - outputs debug messages of WiFiManager library to Serial / Telnet
-  - Added table with test cases
-  - Code formatting, comments
+  Версия 1.4:
+  - Исправлен баг при смене режимов
+  - Исправлены тормоза в режиме точки доступа
+  --- 08.07.2019
+  - Исправлены параметры и процесс подключения к WiFi сети (таймаут 7 секунд) и развёртываия WiFi точки доступа (параметры имени/пароля)
+  - Добавлено "#define USE_NTP" - позволяет запретить обращаться в интернет
+  - Добавлено "#define ESP_USE_BUTTON - позволяет собирать лампу без физической кнопки, иначе яркость эффектов самопроизвольно растёт до максимальной
+  - Переработаны параметры IP адресов, STA_STATIC_IP теперь пустой по умолчанию - избавляет от путаницы с IP адресами из неправильных диапазонов
+  - Добавлено "#define GENERAL_DEBUG" - выводит в Serial/Telnet некоторые отладочные сообщения
+  - Добавлено "#define WIFIMAN_DEBUG (true)" - выводит в Serial/Telnet отладочные сообщения библиотеки WiFiManager
+  - Добавлена таблица с тест кейсами
+  - Форматирование кода, комментарии
   --- 11.07.2019
-  - Fixed a bug of not turning off the matrix after the alarm went off, if the matrix was turned off before the alarm
-  - Added table with test cases
-  --- 07/14/2019
-  - Fixed a bug with turning off the alarm if the "matrix" effect was active before it went off (or another effect where few LEDs were used)
-  - Added air control:
-  - works only in WiFi client mode
-  - works when the button is connected (because the firmware mode is activated by the button)
-  --- 07/16/2019
-  - Fixed the regular freezing of the matrix for 1-2 seconds in the absence of an Internet connection (but with a successful connection to WiFi)
+  - Исправлена ошибка невыключения матрицы после срабатывания будильника, если до будильника матрица была выключенной
+  - Дополнена таблица с тест кейсами
+  --- 14.07.2019
+  - Исправлена ошибка выключения будильника, если перед его срабатыванием был активен эффект "матрица" (или другой эффект, где задействовано мало светодиодов)
+  - Добавлено управление по воздуху:
+  -- работает только в режиме WiFi клиента
+  -- работает при подключенной кнопке (потому что режим прошивки активируется кнопкой)
+  --- 16.07.2019
+  - Исправлено регулярное подвисание матрицы на 1-2 секунды при отсутствии подключения к интернету (но при успешном подключении к WiFi)
   --- 28.07.2019
-  - Improved interaction with android application (sending state after each operation)
+  - Доработано взаимодействие с android приложением (отправка состояния после каждой операции)
   --- 01.08.2019
-  - Return to the standard library GyverButton (change from it moved to button.ino
-  - Added 2 effects: Fireflies with a trail and White light
-  - When an update is requested over the air (2 quadruple touches to the button), the lamp switches to the "Matrix" mode for visual confirmation of readiness for firmware
-  - Added the function of scanning the network and adding lamps using multicast packets to the android application, finalizing the firmware for this
+  - Возврат к стандартной библиотеке GyverButton (изменениё из неё перенесено в button.ino
+  - Добавлены 2 эффекта: Светлячки со шлейфом и Белый свет
+  - При запросе обновления по воздуху (2 четверных касания к кнопке) лампа переключается в режим "Матрица" для визуального подтверждения готовности к прошивке
+  - В android приложение добавлена функция сканирования сети и добавления ламп с помощью multicast пакетов, доработка прошивки под это
   --- 03.08.2019
-  - Fixed errors in the interaction of the android application with the lamp, the current time (or millis (), if the time is not synchronized) is added to the output of the CURR command
-  --- 08/10/2019
-  - Added fine tuning of brightness, speed and scale of effects
-  - Added interaction with android application for managing alarms
+  - Исправлены ошибки взаимодействия android приложения с лампой, в вывод команды CURR добавлено текущее время (или millis(), если время не синхронизировано)
+  --- 10.08.2019
+  - Добавлена точная настройка яркости, скорости и масштаба эффектов
+  - Добавлено взаимодействие с android приложением по управлению будильниками
   --- 14.08.2019
-  - Added sleep timer function
+  - Добавлена функция таймера отключения
   --- 26.08.2019
-  - Added a mode for automatic switching of favorite effects
-  - Reorganized code, fixed bugs
+  - Добавлен режим автоматического переключения избранных эффектов
+  - Реорганизован код, исправлены ошибки
   --- 28.08.2019
-  - Added a call to the esp module update mode from the android application
+  - Добавлен вызов режима обновления модуля esp из android приложения
   --- 30.08.2019
-  - Effect "Fireflies with trails" renamed to "Fading pixels"
-  - Added 5 new effects: "Diagonal rainbow", "Blizzard", "Starfall", "Fireflies with trails" (new) and "Wandering cube"
-  - Bugs fixed
+  - Эффект "Светлячки со шлейфами" переименован в "Угасающие пиксели"
+  - Добавлены 5 новых эффекта: "Радуга диагональная", "Метель", "Звездопад", "Светлячки со шлейфами" (новый) и "Блуждающий кубик"
+  - Исправлены ошибки
   --- 04.09.2019
-  - Most of the definitions (constants) have been moved to the Constants.h file
-  - Big optimization of memory usage
-  - Fixed a bug of not turning on the "White light" effect by the application and the button
-  - Fixed bug with incorrect interval selection in Favorites mode in android application
+  - Большая часть определений (констант) перенесена в файл Constants.h
+  - Большая оптимизация использования памяти
+  - Исправлена ошибка невключения эффекта "Белый свет" приложением и кнопкой
+  - Исправлена ошибка неправильного выбора интервала в режиме Избранное в android приложении
   --- 16.09.2019
-  - Added saving the state (on / off) of the lamp in the EEPROM memory
-  - Added new white light effect (with horizontal stripe)
-  - Reorganized code, fixed bugs
+  - Добавлено сохранение состояния (вкл/выкл) лампы в EEPROM память
+  - Добавлен новый эффект белого света (с горизонтальной полосой)
+  - Реорганизован код, исправлены ошибки
   --- 20.09.2019
-  - Added the ability to save the state (on / off) of the "Favorites" mode; not cleared by turning off the matrix, not cleared by restarting the esp module
-  - Removed cleaning of WiFi parameters when starting with a held down button; governed by the ESP_RESET_ON_START directive, which is set to false by default
+  - Добавлена возможность сохранять состояние (вкл/выкл) режима "Избранное"; не сбрасывается выключением матрицы, не сбрасывается перезапуском модуля esp
+  - Убрана очистка параметров WiFi при старте с зажатой кнопкой; регулируется директивой ESP_RESET_ON_START, которая определена как false по умолчанию
   --- 24.09.2019
-  - Added changes from the firmware from Alex Gyver v1.5: creeping line with the IP address of the lamp by a five-time click on the button
+  - Добавлены изменения из прошивка от Alex Gyver v1.5: бегущая строка с IP адресом лампы по пятикратному клику на кнопку
   --- 29.09.2019
-  - Added option to display debug messages via telnet protocol instead of serial for remote debugging
-  - Fixed a bug with adjusting the brightness with the button
+  - Добавлена опция вывода отладочных сообщений по пртоколу telnet вместо serial для удалённой отладки
+  - Исправлена ошибка регулировки яркости кнопкой
   --- 05.10.2019
-  - Added control via MQTT protocol
-  - Fixed a bug with turning off the alarm clock with the button
-  - Added a delay of 1 second immediately after the start, during which you need to press the button to clear the saved WiFi parameters (if ESP_RESET_ON_START == true)
+  - Добавлено управление по протоколу MQTT
+  - Исправлена ошибка выключения будильника кнопкой
+  - Добавлена задержка в 1 секунду сразу после старта, в течение которой нужно нажать кнопку, чтобы очистить сохранённые параметры WiFi (если ESP_RESET_ON_START == true)
   --- 12.10.2019
-  - Added the ability to change the operating mode of the lamp (ESP_MODE) without the need for flashing; called by a sevenfold click on the button when the matrix is ​​on; saved to EEPROM
-  - Changed the alarm clock algorithm:
-  - * update of its hue / brightness occurs 1 time in 3 seconds instead of 1 time per minute
-  - * diodes are divided into 6 groups, the first of which is assigned a new shade / brightness 1 time in 3 seconds, the second "lags behind" by 1 step, the third - by 2 steps, etc. (for smoother)
-  - Added visual signaling about some important actions / states of the lamp:
-  - * when starting in WiFi client mode and not yet configured WiFi network parameters (when they need to be entered) - 1 yellow flash
-  - * if the lamp started in the WiFi client mode with unconfigured WiFi network parameters, and they were not entered within the allotted timeout (before rebooting) - 1 red flash
-  - * when the lamp switches to the over-the-air (OTA) update mode by two four-time clicks on the button or on the OTA button from the android application - 2 flashes in yellow
-  - * if the lamp was switched to OTA mode, but did not wait for the firmware in the allotted timeout (before rebooting) - 2 flashes in red
-  - * when switching the working mode of the lamp WiFi access point / WiFi client by seven-time clicking on the button (before rebooting) - 3 flashes in red
-  - * when requesting to display the time in creeping line, if time is not synchronized - 4 flashes in red
-  - Reduced the timeout for connecting to a WiFi network to 6 seconds; caused by the increased duration of the setup () function, it must be less than 8 seconds in total
-  - Optimized code
+  - Добавлена возможность сменить рабочий режим лампы (ESP_MODE) без необходимости перепрошивки; вызывается по семикратному клику по кнопке при включенной матрице; сохраняется в EEPROM
+  - Изменён алгоритм работы будильника:
+  -  * обновление его оттенка/яркости происходит 1 раз в 3 секунды вместо 1 раза в минуту
+  -  * диоды разбиты на 6 групп, первой из которых назначается новый оттенок/яркость 1 раз в 3 секунды, вторая "отстаёт" на 1 шаг, третья - на 2 шага и т.д. (для большей плавности)
+  - Добавлена визуальная сигнализация о некоторых важных действиях/состояниях лампы:
+  -  * при запуске в режиме WiFi клиента и ещё не настроенных параметрах WiFi сети (когда их нужно ввести)                                                     - 1 вспышка жёлтым
+  -  * если лампа стартовала в режиме WiFi клиента с ненастроенными параметрами WiFi сети, и они не были введены за отведённый таймаут (перед перезагрузкой)   - 1 вспышка красным
+  -  * при переходе лампы в режим обновления по воздуху (OTA) по двум четырёхкратным кликам по кнопке или по кнопке OTA из android приложения                  - 2 вспышки жёлтым
+  -  * если лампа была переведена в режим OTA, но не дождалась прошивки за отведённый таймаут (перед перезагрузкой)                                            - 2 вспышки красным
+  -  * при переключении рабочего режима лампы WiFi точка доступа/WiFi клиент семикратным кликом по кнопке (перед перезагрузкой)                                - 3 вспышки красным
+  -  * при запросе вывода времени бегущей строкой, если время не синхронизировано                                                                              - 4 вспышки красным
+  - Уменьшен таймаут подключения к WiFi сети до 6 секунд; вызвано увеличившейся продолжительностью работы функции setup(), она в сумме должна быть меньше 8 секунд
+  - Оптимизирован код
   --- 14.10.2019
-  - If at the first start in the WiFi client mode, the requested WiFi network name and password are not entered within the allotted timeout (5 minutes), the lamp will restart in the access point mode
-  - Added time display in creeping line:
-  - * upon request - six times click - the current time in white;
-  - * periodically - defined by the PRINT_TIME constant in Constants.h - from once per hour (in red) to once per minute (in blue) with the brightness of the current effect both with the matrix on and off
+  - Если при первом старте в режиме WiFi клиента запрашиваемые имя и пароль WiFi сети не введены за отведённый таймаут (5 минут), лампа перезагрузится в режиме точки доступа
+  - Добавлен вывод времени бегущей строкой:
+  -  * по запросу - шестикратному клику - текущее время белым цветом;
+  -  * периодически - определяется константой PRINT_TIME в Constants.h - от раза в час (красным цветом) до раза в минуту (синим цветом) с яркостью текущего эффекта как при включенной, так и при выключенной матрице
   --- 19.10.2019
-  - Added "night hours" (from NIGHT_HOURS_START to NIGHT_HOURS_STOP inclusive) and "daytime hours" (all the rest of the time), for which brightness control is available for displaying the time as a running line - NIGHT_HOURS_BRIGHTNESS and DAY_HOURS_BRIGHTNESS
+  - Добавлены "ночные часы" (от NIGHT_HOURS_START до NIGHT_HOURS_STOP включительно) и "дневные часы" (всё остальное время), для которых доступна регулировка яркости для вывода времени бегущей строкой - NIGHT_HOURS_BRIGHTNESS и DAY_HOURS_BRIGHTNESS
   --- 20.10.2019
-  - Added blocking of the button on the lamp from the android application; saved in EEPROM memory
+  - Добавлена блокировка кнопки на лампе из android приложения; сохраняется в EEPROM память
   --- 24.10.2019
-  - Added signal output (HIGH / LOW - configurable by the constant MOSFET_LEVEL) synchronously with the switching on of the matrix to the pin of the MOSFET transistor (configurable by the constant MOSFET_PIN)
-  - Added signal output (HIGH / LOW - configured by the ALARM_LEVEL constant) to the alarm pin (configured by the ALARM_PIN constant); the signal sounds for one minute, starting from the time at which the alarm was set
+  - Добавлен вывод сигнала (HIGH/LOW - настраивается константой MOSFET_LEVEL) синхронно с включением матрицы на пин MOSFET транзистора (настраивается константой MOSFET_PIN)
+  - Добавлен вывод сигнала (HIGH/LOW - настраивается константой ALARM_LEVEL) на пин будильника (настраивается константой ALARM_PIN); сигнал подаётся в течение одной минуты, начиная со времени, на которое заведён будильник
   --- 02.11.2019
-  - Added summer / winter time transition (changed time zone settings, see Constants.h); added Timezone library
-  - Added effect White fire
-  - Fixed a bug with resetting the signal on the ALARM_PIN pin when you manually turn off the alarm
-  - Added alarm (4 flashes in red) when requesting time output by six-click, if the time is not synchronized
+  - Добавлен переход на летнее/зимнее время (изменены настройки часового пояса, см. Constants.h); добавлена библиотека Timezone
+  - Добавлен эффект Белый огонь
+  - Исправлена ошибка сброса сигнала на пине ALARM_PIN при отключении будильника вручную
+  - Добавлена сигнализация (4 вспышки красным) при запросе вывода времени шестикратным кликом, если время не синхронизировано
   --- 04.11.2019
-  - Fixed a bug of not turning on the MOSFET of the matrix when the "dawn" is triggered
-  - Fixed a bug of not turning on the MOSFET matrix when displaying time and IP address
+  - Исправлена ошибка невключения MOSFET'а матрицы при срабатывании "рассвета"
+  - Исправлена ошибка невключения MOSFET'а матрицы при выводе времени и IP адреса
   --- 08.11.2019
-  - Fixed static IP address assignment errors
-  - Added WiFiManager Captive Portal sketch to enter custom options and settings
+  - Исправлены ошибки назначения статического IP адреса
+  - Добавлен набросок WiFiManager Captive Portal для ввода пользовательских параметров и настроек
 */
 
 // Ссылка для менеджера плат:
@@ -279,7 +290,7 @@
 #include "Types.h"
 #include "timerMinim.h"
 #ifdef ESP_USE_BUTTON
-#include "GyverButton.h"
+#include <GyverButton.h>
 #endif
 #include "fonts.h"
 #ifdef USE_NTP
@@ -309,18 +320,18 @@ WiFiUDP Udp;
 
 #ifdef USE_NTP
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, NTP_ADDRESS, 0, NTP_INTERVAL); // an object requesting time from the ntp server; it does not use the time zone offset (moved to the localTimeZone object); there should always be UTC time here
-#ifdef SUMMER_WINTER_TIME
-TimeChangeRule summerTime = { SUMMER_TIMEZONE_NAME, SUMMER_WEEK_NUM, SUMMER_WEEKDAY, SUMMER_MONTH, SUMMER_HOUR, SUMMER_OFFSET };
-TimeChangeRule winterTime = { WINTER_TIMEZONE_NAME, WINTER_WEEK_NUM, WINTER_WEEKDAY, WINTER_MONTH, WINTER_HOUR, WINTER_OFFSET };
-Timezone localTimeZone(summerTime, winterTime);
-#else
-TimeChangeRule localTime = { LOCAL_TIMEZONE_NAME, LOCAL_WEEK_NUM, LOCAL_WEEKDAY, LOCAL_MONTH, LOCAL_HOUR, LOCAL_OFFSET };
-Timezone localTimeZone(localTime);
-#endif
-#ifdef PHONE_N_MANUAL_TIME_PRIORITY
-bool stillUseNTP = true;
-#endif
+NTPClient timeClient(ntpUDP, NTP_ADDRESS, 0, NTP_INTERVAL); // объект, запрашивающий время с ntp сервера; в нём смещение часового пояса не используется (перенесено в объект localTimeZone); здесь всегда должно быть время UTC
+  #ifdef SUMMER_WINTER_TIME
+  TimeChangeRule summerTime = { SUMMER_TIMEZONE_NAME, SUMMER_WEEK_NUM, SUMMER_WEEKDAY, SUMMER_MONTH, SUMMER_HOUR, SUMMER_OFFSET };
+  TimeChangeRule winterTime = { WINTER_TIMEZONE_NAME, WINTER_WEEK_NUM, WINTER_WEEKDAY, WINTER_MONTH, WINTER_HOUR, WINTER_OFFSET };
+  Timezone localTimeZone(summerTime, winterTime);
+  #else
+  TimeChangeRule localTime = { LOCAL_TIMEZONE_NAME, LOCAL_WEEK_NUM, LOCAL_WEEKDAY, LOCAL_MONTH, LOCAL_HOUR, LOCAL_OFFSET };
+  Timezone localTimeZone(localTime);
+  #endif
+  #ifdef PHONE_N_MANUAL_TIME_PRIORITY
+    bool stillUseNTP = true;
+  #endif    
 #endif
 
 timerMinim timeTimer(3000);
@@ -345,9 +356,9 @@ uint8_t random_on = RANDOM_SETTINGS_IN_CYCLE_MODE;
 
 #ifdef ESP_USE_BUTTON
 #if (BUTTON_IS_SENSORY == 1)
-GButton touch(BTN_PIN, LOW_PULL, NORM_OPEN);  //for touch button LOW_PULL
+GButton touch(BTN_PIN, LOW_PULL, NORM_OPEN);  // для сенсорной кнопки LOW_PULL
 #else
-GButton touch(BTN_PIN, HIGH_PULL, NORM_OPEN); //for a physical (non-touch) button HIGH_PULL. well, the button must be placed without a resistor in the gap between pins D2 and GND
+GButton touch(BTN_PIN, HIGH_PULL, NORM_OPEN); // для физической (не сенсорной) кнопки HIGH_PULL. ну и кнопку нужно ставить без резистора в разрыв между пинами D2 и GND
 #endif
 #endif
 
@@ -372,16 +383,16 @@ uint32_t MqttManager::mqttLastConnectingAttempt = 0;
 SendCurrentDelegate MqttManager::sendCurrentDelegate = NULL;
 #endif
 
-// --- INITIALIZING VARIABLES -------
+// --- ИНИЦИАЛИЗАЦИЯ ПЕРЕМЕННЫХ -------
 uint16_t localPort = ESP_UDP_PORT;
-char packetBuffer[MAX_UDP_BUFFER_SIZE];                     //buffer to hold incoming packet
+char packetBuffer[MAX_UDP_BUFFER_SIZE];                     // buffer to hold incoming packet
 char inputBuffer[MAX_UDP_BUFFER_SIZE];
 static const uint8_t maxDim = max(WIDTH, HEIGHT);
 
 ModeType modes[MODE_AMOUNT];
 AlarmType alarms[7];
 
-static const uint8_t dawnOffsets[] PROGMEM = {5, 10, 15, 20, 25, 30, 40, 50, 60};   //options for the drop-down list of the "time before dawn" parameter (alarm clock); synchronized with android app
+static const uint8_t dawnOffsets[] PROGMEM = {5, 10, 15, 20, 25, 30, 40, 50, 60};   // опции для выпадающего списка параметра "время перед 'рассветом'" (будильник); синхронизировано с android приложением
 uint8_t dawnMode;
 bool dawnFlag = false;
 uint32_t thisTime;
@@ -392,9 +403,9 @@ bool loadingFlag = true;
 bool ONflag = false;
 uint32_t eepromTimeout;
 bool settChanged = false;
-bool buttonEnabled = true; //this is an important initial value. you cannot do false by default
+bool buttonEnabled = true; // это важное первоначальное значение. нельзя делать false по умолчанию
 
-unsigned char matrixValue[8][16]; //this is an array for the Fire effect
+unsigned char matrixValue[8][16]; //это массив для эффекта Огонь
 
 bool TimerManager::TimerRunning = false;
 bool TimerManager::TimerHasFired = false;
@@ -421,53 +432,54 @@ void setup()
 
 
   // ПИНЫ
-#ifdef MOSFET_PIN                                         // initialize the pin that drives the MOSFET transistor to the "off" state
+  #ifdef MOSFET_PIN                                         // инициализация пина, управляющего MOSFET транзистором в состояние "выключен"
   pinMode(MOSFET_PIN, OUTPUT);
-#ifdef MOSFET_LEVEL
+  #ifdef MOSFET_LEVEL
   digitalWrite(MOSFET_PIN, !MOSFET_LEVEL);
-#endif
-#endif
+  #endif
+  #endif
 
-#ifdef ALARM_PIN                                          // initialization of the pin that controls the alarm clock to the "off" state
+  #ifdef ALARM_PIN                                          // инициализация пина, управляющего будильником в состояние "выключен"
   pinMode(ALARM_PIN, OUTPUT);
-#ifdef ALARM_LEVEL
+  #ifdef ALARM_LEVEL
   digitalWrite(ALARM_PIN, !ALARM_LEVEL);
-#endif
-#endif
+  #endif
+  #endif
 
 
   // TELNET
-#if defined(GENERAL_DEBUG) && GENERAL_DEBUG_TELNET
+  #if defined(GENERAL_DEBUG) && GENERAL_DEBUG_TELNET
   telnetServer.begin();
-  for (uint8_t i = 0; i < 100; i++)                         // pause for 10 seconds in debug mode to have time to connect via telnet before the first messages are displayed
+  for (uint8_t i = 0; i < 100; i++)                         // пауза 10 секунд в отладочном режиме, чтобы успеть подключиться по протоколу telnet до вывода первых сообщений
+  {
     handleTelnetClient();
     delay(100);
     ESP.wdtFeed();
   }
-#endif
+  #endif
 
 
   // КНОПКА
-#if defined(ESP_USE_BUTTON)
+  #if defined(ESP_USE_BUTTON)
   touch.setStepTimeout(BUTTON_STEP_TIMEOUT);
   touch.setClickTimeout(BUTTON_CLICK_TIMEOUT);
-#if ESP_RESET_ON_START
-  delay(1000);                                            // ожидание инициализации модуля кнопки ttp223 (по спецификации 250мс)
-  if (digitalRead(BTN_PIN))
-  {
-    wifiManager.resetSettings();                          // сброс сохранённых SSID и пароля при старте с зажатой кнопкой, если разрешено
-    LOG.println(F("Настройки WiFiManager сброшены"));
-    //buttonEnabled = true;                                   // при сбросе параметров WiFi сразу после старта с зажатой кнопкой, также разблокируется кнопка, если была заблокирована раньше
-    EepromManager::SaveButtonEnabled(&buttonEnabled);
-  }
-  ESP.wdtFeed();
-#elif defined(BUTTON_LOCK_ON_START)
-  delay(1000);                                            // ожидание инициализации модуля кнопки ttp223 (по спецификации 250мс)
-  if (digitalRead(BTN_PIN))
-    buttonEnabled = false;
-  ESP.wdtFeed();
-#endif
-#endif
+    #if ESP_RESET_ON_START
+    delay(1000);                                            // ожидание инициализации модуля кнопки ttp223 (по спецификации 250мс)
+    if (digitalRead(BTN_PIN))
+    {
+      wifiManager.resetSettings();                          // сброс сохранённых SSID и пароля при старте с зажатой кнопкой, если разрешено
+      LOG.println(F("Настройки WiFiManager сброшены"));
+      //buttonEnabled = true;                                   // при сбросе параметров WiFi сразу после старта с зажатой кнопкой, также разблокируется кнопка, если была заблокирована раньше
+      EepromManager::SaveButtonEnabled(&buttonEnabled);
+    }
+    ESP.wdtFeed();
+    #elif defined(BUTTON_LOCK_ON_START)
+    delay(1000);                                            // ожидание инициализации модуля кнопки ttp223 (по спецификации 250мс)
+    if (digitalRead(BTN_PIN))
+      buttonEnabled = false;
+    ESP.wdtFeed();
+    #endif
+  #endif
 
 
   // ЛЕНТА/МАТРИЦА
@@ -482,17 +494,17 @@ void setup()
   FastLED.show();
 
 #ifdef USE_SHUFFLE_FAVORITES // первоначальная очередь избранного до перемешивания
-  for (uint8_t i = 0; i < MODE_AMOUNT; i++)
-    shuffleFavoriteModes[i] = i;
+    for (uint8_t i = 0; i < MODE_AMOUNT; i++)
+      shuffleFavoriteModes[i] = i;
 #endif
 
   // EEPROM
   EepromManager::InitEepromSettings(                        // инициализация EEPROM; запись начального состояния настроек, если их там ещё нет; инициализация настроек лампы значениями из EEPROM
     modes, alarms, &espMode, &ONflag, &dawnMode, &currentMode, &buttonEnabled,
-#ifdef RANDOM_SETTINGS_IN_CYCLE_MODE
+    #ifdef RANDOM_SETTINGS_IN_CYCLE_MODE
     &random_on,
-#endif //ifdef RANDOM_SETTINGS_IN_CYCLE_MODE
-    & (FavoritesManager::ReadFavoritesFromEeprom),
+    #endif //ifdef RANDOM_SETTINGS_IN_CYCLE_MODE
+    &(FavoritesManager::ReadFavoritesFromEeprom),
     &(FavoritesManager::SaveFavoritesToEeprom),
     &(restoreSettings)); // не придумал ничего лучше, чем делать восстановление настроек по умолчанию в обработчике инициализации EepromManager
   LOG.printf_P(PSTR("Рабочий режим лампы: ESP_MODE = %d\n"), espMode);
@@ -524,23 +536,23 @@ void setup()
 
     wifiServer.begin();
   }
-  else                                                      // WiFi client mode (we connect to the router if there is a saved SSID and password, otherwise we create a WiFi access point and request them)
+  else                                                      // режим WiFi клиента (подключаемся к роутеру, если есть сохранённые SSID и пароль, иначе создаём WiFi точку доступа и запрашиваем их)
   {
     LOG.println(F("Старт в режиме WiFi клиента (подключение к роутеру)"));
 
     if (WiFi.SSID().length())
     {
       LOG.printf_P(PSTR("Подключение к WiFi сети: %s\n"), WiFi.SSID().c_str());
-#ifdef RUNUP_PAUSE // a pause before connecting to the router for those to whom electricity often goes out, and the router does not have time to boot
-      for (uint8_t i = 0; i < RUNUP_PAUSE; i++) {
-        delay(1000);
-        ESP.wdtFeed();
-      }
-#endif
+      #ifdef RUNUP_PAUSE // пауза перед подключением к роутеру для тех, к кого часто пропадает электричество, и роутер не успевает загрузиться
+        for (uint8_t i = 0; i < RUNUP_PAUSE; i++) {
+          delay(1000);
+          ESP.wdtFeed();
+        }
+      #endif
 
       if (sizeof(STA_STATIC_IP))                            // ВНИМАНИЕ: настраивать статический ip WiFi клиента можно только при уже сохранённых имени и пароле WiFi сети (иначе проявляется несовместимость библиотек WiFiManager и WiFi)
       {
-        LOG.print(F("Configured a static IP address: "));
+        LOG.print(F("Сконфигурирован статический IP адрес: "));
         LOG.printf_P(PSTR("%u.%u.%u.%u\n"), STA_STATIC_IP[0], STA_STATIC_IP[1], STA_STATIC_IP[2], STA_STATIC_IP[3]);
         wifiManager.setSTAStaticIPConfig(
           IPAddress(STA_STATIC_IP[0], STA_STATIC_IP[1], STA_STATIC_IP[2], STA_STATIC_IP[3]),// статический IP адрес ESP в режиме WiFi клиента
@@ -550,14 +562,14 @@ void setup()
     }
     else
     {
-      LOG.println(F("WiFi network not detected, launching WiFi access point to configure parameters for connecting to WiFi network..."));
+      LOG.println(F("WiFi сеть не определена, запуск WiFi точки доступа для настройки параметров подключения к WiFi сети..."));
       CaptivePortalManager::captivePortalCalled = true;
       wifiManager.setBreakAfterConfig(true);                // перезагрузка после ввода и сохранения имени и пароля WiFi сети
       showWarning(CRGB::Yellow, 1000U, 500U);               // мигание жёлтым цветом 0,5 секунды (1 раз) - нужно ввести параметры WiFi сети для подключения
     }
-#ifdef WARNING_IF_NO_TIME
-    noTimeWarningShow();
-#endif
+    #ifdef WARNING_IF_NO_TIME
+      noTimeWarningShow();
+    #endif
 
     wifiManager.setConnectTimeout(ESP_CONN_TIMEOUT);        // установка времени ожидания подключения к WiFi сети, затем старт WiFi точки доступа
     wifiManager.setConfigPortalTimeout(ESP_CONF_TIMEOUT);   // установка времени работы WiFi точки доступа, затем перезагрузка; отключить watchdog?
@@ -579,67 +591,65 @@ void setup()
         {
           LOG.println(F("Время ожидания ввода SSID и пароля от WiFi сети или подключения к WiFi сети превышено\nЛампа будет перезагружена в режиме WiFi точки доступа!\n"));
 
-#ifdef RESET_WIFI_ON_ESP_MODE_CHANGE
-          if (espMode) wifiManager.resetSettings();                             // сброс сохранённых SSID и пароля (сброс настроек подключения к роутеру)
-#endif
+          #ifdef RESET_WIFI_ON_ESP_MODE_CHANGE
+            if (espMode) wifiManager.resetSettings();                             // сброс сохранённых SSID и пароля (сброс настроек подключения к роутеру)
+          #endif
           espMode = (espMode == 0U) ? 1U : 0U;
-
+          
           EepromManager::SaveEspMode(&espMode);
 
           LOG.printf_P(PSTR("Рабочий режим лампы изменён и сохранён в энергонезависимую память\nНовый рабочий режим: ESP_MODE = %d, %s\nРестарт...\n"),
-                       espMode, espMode == 0U ? F("WiFi точка доступа") : F("WiFi клиент (подключение к роутеру)"));
+            espMode, espMode == 0U ? F("WiFi точка доступа") : F("WiFi клиент (подключение к роутеру)"));
         }
       }
       else                                                  // страница настройки WiFi не была показана, не удалось подключиться к ранее сохранённой WiFi сети (перенос в новую WiFi сеть)
       {
-        //LOG.println(F("Не удалось подключиться к WiFi сети\nВозможно, заданная WiFi сеть больше не доступна\nРестарт для запроса нового имени WiFi сети и пароля...\n"));
-        LOG.println(F("Failed to connect to WiFi network, Maybe the specified WiFi network is no longer available. Restart to request a new WiFi network name and password...\n"));
+        LOG.println(F("Не удалось подключиться к WiFi сети\nВозможно, заданная WiFi сеть больше не доступна\nРестарт для запроса нового имени WiFi сети и пароля...\n"));
         wifiManager.resetSettings();
       }
 
-      showWarning(CRGB::Red, 1000U, 500U);                  // blinking red for 0.5 seconds (1 time) - waiting for the SSID and password of the WiFi network is stopped, reboot
+      showWarning(CRGB::Red, 1000U, 500U);                  // мигание красным цветом 0,5 секунды (1 раз) - ожидание ввода SSID'а и пароля WiFi сети прекращено, перезагрузка
       ESP.restart();
     }
 
-    if (CaptivePortalManager::captivePortalCalled &&        // first connection to a WiFi network after configuring WiFi parameters on the setup page - a reboot is required to apply a static IP
+    if (CaptivePortalManager::captivePortalCalled &&        // первое подключение к WiFi сети после настройки параметров WiFi на странице настройки - нужна перезагрузка для применения статического IP
         sizeof(STA_STATIC_IP) &&
         WiFi.localIP() != IPAddress(STA_STATIC_IP[0], STA_STATIC_IP[1], STA_STATIC_IP[2], STA_STATIC_IP[3]))
     {
-      //LOG.println(F("Рестарт для применения заданного статического IP адреса..."));
-      LOG.println(F("Restart to apply the specified static IP address..."));
+      LOG.println(F("Рестарт для применения заданного статического IP адреса..."));
       delay(100);
       ESP.restart();
     }
 
-    LOG.print(F("IP address: "));
+    LOG.print(F("IP адрес: "));
     LOG.println(WiFi.localIP());
 
-#ifdef USE_BLYNK
+    #ifdef USE_BLYNK
     Blynk.config(USE_BLYNK);
-#endif
+    #endif
   }
   ESP.wdtFeed();
 
-  LOG.printf_P(PSTR("UDP server port: %u\n"), localPort);
+  LOG.printf_P(PSTR("Порт UDP сервера: %u\n"), localPort);
   Udp.begin(localPort);
 
 
   // NTP
-#ifdef USE_NTP
+  #ifdef USE_NTP
   timeClient.begin();
   ESP.wdtFeed();
-#endif
+  #endif
 
 
   // MQTT
-#if (USE_MQTT)
+  #if (USE_MQTT)
   if (espMode == 1U)
   {
     mqttClient = new AsyncMqttClient();
     MqttManager::setupMqtt(mqttClient, inputBuffer, &sendCurrent);    // создание экземпляров объектов для работы с MQTT, их инициализация и подключение к MQTT брокеру
   }
   ESP.wdtFeed();
-#endif
+  #endif
 
 
   // ОСТАЛЬНОЕ
@@ -655,83 +665,83 @@ void setup()
 void loop()
 {
   parseUDP();
-  if (Painting == 0) {
+if (Painting == 0) {
 
-    effectsTick();
+  effectsTick();
 
-    EepromManager::HandleEepromTick(&settChanged, &eepromTimeout, &ONflag,
-                                    &currentMode, modes, &(FavoritesManager::SaveFavoritesToEeprom));
+  EepromManager::HandleEepromTick(&settChanged, &eepromTimeout, &ONflag, 
+    &currentMode, modes, &(FavoritesManager::SaveFavoritesToEeprom));
 
-    //#ifdef USE_NTP
-#if defined(USE_NTP) || defined(USE_MANUAL_TIME_SETTING) || defined(GET_TIME_FROM_PHONE)
-    //if (millis() > 30 * 1000U) можно попытаться оттянуть срок первой попытки синхронизации времени на 30 секунд, чтобы роутер успел не только загрузиться, но и соединиться с интернетом
+  //#ifdef USE_NTP
+  #if defined(USE_NTP) || defined(USE_MANUAL_TIME_SETTING) || defined(GET_TIME_FROM_PHONE)
+  //if (millis() > 30 * 1000U) можно попытаться оттянуть срок первой попытки синхронизации времени на 30 секунд, чтобы роутер успел не только загрузиться, но и соединиться с интернетом
     timeTick();
-#endif
+  #endif
 
-#ifdef ESP_USE_BUTTON
-    //if (buttonEnabled) в процедуре ведь есть эта проверка
+  #ifdef ESP_USE_BUTTON
+  //if (buttonEnabled) в процедуре ведь есть эта проверка
     buttonTick();
-#endif
+  #endif
 
-#ifdef OTA
-    otaManager.HandleOtaUpdate();                             // ожидание и обработка команды на обновление прошивки по воздуху
-#endif
+  #ifdef OTA
+  otaManager.HandleOtaUpdate();                             // ожидание и обработка команды на обновление прошивки по воздуху
+  #endif
 
-    TimerManager::HandleTimer(&ONflag, &settChanged,          // обработка событий таймера отключения лампы
-                              &eepromTimeout, &changePower);
+  TimerManager::HandleTimer(&ONflag, &settChanged,          // обработка событий таймера отключения лампы
+    &eepromTimeout, &changePower);
 
-    if (FavoritesManager::HandleFavorites(                    // обработка режима избранных эффектов
-          &ONflag,
-          &currentMode,
-          &loadingFlag
-          //#ifdef USE_NTP
-#if defined(USE_NTP) || defined(USE_MANUAL_TIME_SETTING) || defined(GET_TIME_FROM_PHONE)
-          , &dawnFlag
-#endif
-#ifdef RANDOM_SETTINGS_IN_CYCLE_MODE
-          , &random_on
-          , &selectedSettings
-#endif
-        ))
+  if (FavoritesManager::HandleFavorites(                    // обработка режима избранных эффектов
+      &ONflag,
+      &currentMode,
+      &loadingFlag
+      //#ifdef USE_NTP
+      #if defined(USE_NTP) || defined(USE_MANUAL_TIME_SETTING) || defined(GET_TIME_FROM_PHONE)
+      , &dawnFlag
+      #endif
+      #ifdef RANDOM_SETTINGS_IN_CYCLE_MODE
+      , &random_on
+      , &selectedSettings
+      #endif
+      ))
+  {
+    #ifdef USE_BLYNK
+    updateRemoteBlynkParams();
+    #endif
+    FastLED.setBrightness(modes[currentMode].Brightness);
+    //FastLED.clear(); из-за этой странной строчки между эффектами лампа полностью тухла. зачем так делать?!
+    //delay(1); и из-за этой ещё
+  }
+
+  #if USE_MQTT
+  if (espMode == 1U && mqttClient && WiFi.isConnected() && !mqttClient->connected())
+  {
+    MqttManager::mqttConnect();                             // библиотека не умеет восстанавливать соединение в случае потери подключения к MQTT брокеру, нужно управлять этим явно
+    MqttManager::needToPublish = true;
+  }
+
+  if (MqttManager::needToPublish)
+  {
+    if (strlen(inputBuffer) > 0)                            // проверка входящего MQTT сообщения; если оно не пустое - выполнение команды из него и формирование MQTT ответа
     {
-#ifdef USE_BLYNK
-      updateRemoteBlynkParams();
-#endif
-      FastLED.setBrightness(modes[currentMode].Brightness);
-      //FastLED.clear(); //because of this strange line between the effects, the lamp was completely extinguished. why do that ?!
-      //delay(1); //and because of this still
+      processInputBuffer(inputBuffer, MqttManager::mqttBuffer, true);
     }
+    
+    MqttManager::publishState();
+  }
+  #endif
 
-#if USE_MQTT
-    if (espMode == 1U && mqttClient && WiFi.isConnected() && !mqttClient->connected())
-    {
-      MqttManager::mqttConnect();                             // the library does not know how to restore the connection if the connection to the MQTT broker is lost, you need to manage this explicitly
-      MqttManager::needToPublish = true;
-    }
+  #ifdef USE_BLYNK
+  if (espMode == 1U && WiFi.isConnected())
+    Blynk.run();
+  #endif
 
-    if (MqttManager::needToPublish)
-    {
-      if (strlen(inputBuffer) > 0)                            // check the incoming MQTT message; if it is not empty, the command is executed from it and the MQTT response is generated
-      {
-        processInputBuffer(inputBuffer, MqttManager::mqttBuffer, true);
-      }
-
-      MqttManager::publishState();
-    }
-#endif
-
-#ifdef USE_BLYNK
-    if (espMode == 1U && WiFi.isConnected())
-      Blynk.run();
-#endif
-
-#if defined(GENERAL_DEBUG) && GENERAL_DEBUG_TELNET
-    handleTelnetClient();
-#endif
-  }//if (Painting == 0)
+  #if defined(GENERAL_DEBUG) && GENERAL_DEBUG_TELNET
+  handleTelnetClient();
+  #endif
+}//if (Painting == 0)
   ESP.wdtFeed();
 }
 
 #ifndef WIFI_MANAGER_LIBRARY_PROPER_TEST
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!   the libraries from the firmware archive were not placed in the Arduino IDE libraries folder. so you will not download the firmware.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!   библиотеки из архива с прошивкой не были помещены в папку библиотек Arduino IDE. так вы прошивку не загрузите.
 #endif
